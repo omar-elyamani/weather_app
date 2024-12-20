@@ -83,4 +83,5 @@ class DefaultFirebaseOptions {
     authDomain: 'weather-app-4e640.firebaseapp.com',
     storageBucket: 'weather-app-4e640.firebasestorage.app',
   );
+
 }
