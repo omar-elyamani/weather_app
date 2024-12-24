@@ -48,8 +48,8 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.light(), // Light theme
-      darkTheme: ThemeData.dark(), // Dark theme
+      theme: ThemeData.light(),
+      darkTheme: ThemeData.dark(),
       themeMode: _themeMode, // Apply the current theme mode
       home: const AuthPage(),
     );

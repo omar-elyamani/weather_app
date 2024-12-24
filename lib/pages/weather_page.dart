@@ -24,6 +24,23 @@ class _WeatherPageState extends State<WeatherPage> {
   // Loading state
   bool _isLoading = false;
 
+  // Text editing controller for the city field
+  final TextEditingController _cityController = TextEditingController();
+
+  // List of predefined city suggestions
+  final List<String> _citySuggestions = [
+    'New York',
+    'London',
+    'Paris',
+    'Tokyo',
+    'Mumbai',
+    'Sydney',
+    'San Francisco',
+    'Cairo',
+    'Toronto',
+    'Berlin',
+  ];
+
   // Function to fetch weather
   _fetchWeather({String? city}) async {
     setState(() {
@@ -67,6 +84,12 @@ class _WeatherPageState extends State<WeatherPage> {
     }
   }
 
+  // Function to reset the search field and fetch current city weather
+  void resetSearch() {
+  _cityController.clear(); // Clear the text field
+  _fetchWeather(); // Fetch weather for the current city
+  }
+
   // Function to get the weather condition icon
   String getWeatherConditionIcon(String? condition) {
     if (condition == null) return 'assets/sunny.json';
@@ -106,8 +129,6 @@ class _WeatherPageState extends State<WeatherPage> {
 
   @override
   Widget build(BuildContext context) {
-    TextEditingController cityController = TextEditingController();
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue[900],
@@ -134,15 +155,44 @@ class _WeatherPageState extends State<WeatherPage> {
                   child: Row(
                     children: [
                       Expanded(
-                        child: TextField(
-                          controller: cityController,
-                          decoration: const InputDecoration(
-                            border: OutlineInputBorder(),
-                            hintText: 'Enter a city name',
-                          ),
+                        child: Autocomplete<String>(
+                          optionsBuilder: (TextEditingValue textEditingValue) {
+                            if (textEditingValue.text.isEmpty) {
+                              return const Iterable<String>.empty();
+                            }
+                            return _citySuggestions.where((String city) =>
+                                city.toLowerCase().startsWith(textEditingValue.text.toLowerCase()));
+                          },
+                          displayStringForOption: (String option) => option,
+                          fieldViewBuilder: (context, autocompleteController, focusNode, onFieldSubmitted) {
+                            // Synchronize Autocomplete's internal controller with _cityController
+                            _cityController.addListener(() {
+                              if (_cityController.text != autocompleteController.text) {
+                                autocompleteController.text = _cityController.text;
+                              }
+                            });
+
+                            autocompleteController.addListener(() {
+                              if (autocompleteController.text != _cityController.text) {
+                                _cityController.text = autocompleteController.text;
+                              }
+                            });
+
+                            return TextField(
+                              controller: autocompleteController, // Use Autocomplete's internal controller
+                              focusNode: focusNode,
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                hintText: 'Enter a city name',
+                              ),
+                            );
+                          },
+                          onSelected: (String selection) {
+                            _cityController.text = selection; // Update _cityController when a suggestion is selected
+                          },
                         ),
                       ),
-                      
+
                       const SizedBox(width: 10),
 
                       // Search button
@@ -152,8 +202,18 @@ class _WeatherPageState extends State<WeatherPage> {
                         icon: const Icon(Icons.search, color: Colors.white, size: 24),
                         onTap: () {
                           FocusScope.of(context).unfocus();
-                          final city = cityController.text.trim();
-                          _fetchWeather(city: city);
+                          final city = _cityController.text.trim();
+                          if (city.isNotEmpty) {
+                            _fetchWeather(city: city);
+                          } else {
+                            Fluttertoast.showToast(
+                              msg: "Please enter a city name",
+                              toastLength: Toast.LENGTH_SHORT,
+                              gravity: ToastGravity.BOTTOM,
+                              backgroundColor: Colors.orange,
+                              textColor: Colors.white,
+                            );
+                          }
                         },
                       ),
                     ],
@@ -197,15 +257,12 @@ class _WeatherPageState extends State<WeatherPage> {
 
                 const SizedBox(height: 20),
 
-                // Refresh button
+                // Reset button
                 MyButton(
                   width: 200,
-                  text: "Refresh",
+                  text: "Reset",
                   icon: const Icon(Icons.refresh, color: Colors.white, size: 24),
-                  onTap: () {
-                    FocusScope.of(context).unfocus();
-                    _fetchWeather();
-                  },
+                  onTap: resetSearch,
                 ),
               ],
             ),
