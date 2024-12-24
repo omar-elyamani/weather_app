@@ -1,9 +1,11 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:lottie/lottie.dart';
 import 'package:weather_app/models/weather_model.dart';
 import 'package:weather_app/services/weather_service.dart';
-
+import 'package:weather_app/components/my_button.dart';
+import 'package:weather_app/components/my_loader.dart';
 
 class WeatherPage extends StatefulWidget {
   const WeatherPage({super.key});
@@ -13,36 +15,24 @@ class WeatherPage extends StatefulWidget {
 }
 
 class _WeatherPageState extends State<WeatherPage> {
-  // Creating a weather service instance
+  // Weather service instance
   final _weatherService = WeatherService('82e05f089d6ebf7888e999452491f6c5');
-  
-  // Creating a weather model object
+
+  // Weather model object
   WeatherModel? _weather;
 
-  // Implementing the function to fetch the weather
-  _fetchWeather() async {
-    String city = await _weatherService.getCurrentCity();
+  // Loading state
+  bool _isLoading = false;
 
-    try {
-      final weather = await _weatherService.getWeather(city);
-      setState(() {
-        _weather = weather;
-      });
-    } catch (e) {
-      Fluttertoast.showToast(
-        msg: "Error fetching weather: $e",
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-        fontSize: 16.0,
-      );
-    }
-  }
+  // Function to fetch weather
+  _fetchWeather({String? city}) async {
+    setState(() {
+      _isLoading = true;
+    });
 
-  // Implementing the function to fetch the weather of a specific city
-  _fetchCityWeather(String city) async {
-    if(city.isEmpty) {
+    String targetCity = city ?? await _weatherService.getCurrentCity();
+
+    if (targetCity.isEmpty) {
       Fluttertoast.showToast(
         msg: "Please enter a city name",
         toastLength: Toast.LENGTH_SHORT,
@@ -50,29 +40,38 @@ class _WeatherPageState extends State<WeatherPage> {
         backgroundColor: Colors.orange,
         textColor: Colors.white,
       );
+      setState(() {
+        _isLoading = false;
+      });
+      return;
     }
+
     try {
-      final weather = await _weatherService.getWeather(city);
+      final weather = await _weatherService.getWeather(targetCity);
       setState(() {
         _weather = weather;
+        _isLoading = false;
       });
     } catch (e) {
       Fluttertoast.showToast(
-        msg: "Error fetching weather: $e",
+        msg: "Error fetching the weather!",
         toastLength: Toast.LENGTH_LONG,
         gravity: ToastGravity.BOTTOM,
         backgroundColor: Colors.red,
         textColor: Colors.white,
         fontSize: 16.0,
       );
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
-  // Implementing the function to get the weather condition icon
+  // Function to get the weather condition icon
   String getWeatherConditionIcon(String? condition) {
     if (condition == null) return 'assets/sunny.json';
 
-    switch (condition.toLowerCase()) { 
+    switch (condition.toLowerCase()) {
       case 'clouds':
       case 'mist':
       case 'smoke':
@@ -93,8 +92,12 @@ class _WeatherPageState extends State<WeatherPage> {
     }
   }
 
+  // Function to log the user out
+  void logUserOut() async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.pushReplacementNamed(context, '/login_page.dart');
+  }
 
-  // Initializing the state at the beginning of the app
   @override
   void initState() {
     super.initState();
@@ -106,17 +109,28 @@ class _WeatherPageState extends State<WeatherPage> {
     TextEditingController cityController = TextEditingController();
 
     return Scaffold(
-      body: SingleChildScrollView( // Add this to allow scrolling
+      appBar: AppBar(
+        backgroundColor: Colors.blue[900],
+        title: const Text("Omar & Yassine weather app", style: TextStyle(color: Colors.white)),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.white),
+            onPressed: logUserOut,
+            tooltip: "Log Out",
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
         child: Center(
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16.0),
+            padding: const EdgeInsets.symmetric(vertical: 20.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 // Row for TextField and Search Button
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 70.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
                   child: Row(
                     children: [
                       Expanded(
@@ -128,15 +142,18 @@ class _WeatherPageState extends State<WeatherPage> {
                           ),
                         ),
                       ),
+                      
                       const SizedBox(width: 10),
-                      ElevatedButton(
-                        child: const Text('Search'),
-                        onPressed: () {
+
+                      // Search button
+                      MyButton(
+                        width: 120,
+                        text: "Search",
+                        icon: const Icon(Icons.search, color: Colors.white, size: 24),
+                        onTap: () {
                           FocusScope.of(context).unfocus();
                           final city = cityController.text.trim();
-                          if (city.isNotEmpty) {
-                            _fetchCityWeather(city);
-                          }
+                          _fetchWeather(city: city);
                         },
                       ),
                     ],
@@ -144,25 +161,51 @@ class _WeatherPageState extends State<WeatherPage> {
                 ),
                 const SizedBox(height: 20),
 
-                // Weather condition
-                Text(
-                  _weather?.cityName ?? "Loading your city...",
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  _weather != null ? "${_weather?.temperature}°C" : "",
-                  style: const TextStyle(fontSize: 24),
+                // Conditional weather info or loader
+                MyLoader(
+                  isLoading: _isLoading,
+                  child: Column(
+                    children: [
+                      // Weather condition
+                      Text(
+                        _weather?.cityName ?? "Loading your city...",
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Weather temperature
+                      Text(
+                        _weather != null ? "${_weather?.temperature}°C" : "",
+                        style: const TextStyle(fontSize: 24),
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Weather icon
+                      _weather?.mainCondition != null
+                          ? Lottie.asset(getWeatherConditionIcon(_weather?.mainCondition))
+                          : Container(),
+                      const SizedBox(height: 10),
+
+                      // General weather condition
+                      Text(
+                        _weather?.mainCondition ?? "",
+                        style: const TextStyle(fontSize: 20),
+                      ),
+                    ],
+                  ),
                 ),
 
-                // Weather icon
-                _weather?.mainCondition != null
-                    ? Lottie.asset(getWeatherConditionIcon(_weather?.mainCondition))
-                    : Container(),
+                const SizedBox(height: 20),
 
-                // General weather condition
-                Text(
-                  _weather?.mainCondition ?? "",
-                  style: const TextStyle(fontSize: 20),
+                // Refresh button
+                MyButton(
+                  width: 200,
+                  text: "Refresh",
+                  icon: const Icon(Icons.refresh, color: Colors.white, size: 24),
+                  onTap: () {
+                    FocusScope.of(context).unfocus();
+                    _fetchWeather();
+                  },
                 ),
               ],
             ),
