@@ -29,6 +29,11 @@ class _WeatherPageState extends State<WeatherPage> {
 
   // List of predefined city suggestions
   final List<String> _citySuggestions = [
+    'Salé',
+    'Rabat',
+    'Casablanca',
+    'Marrakech',    
+    'Riyadh',
     'New York',
     'London',
     'Paris',
@@ -39,6 +44,7 @@ class _WeatherPageState extends State<WeatherPage> {
     'Cairo',
     'Toronto',
     'Berlin',
+    'Dar es Salaam',
   ];
 
   // Function to fetch weather
