@@ -1,41 +1,51 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:weather_app/components/my_button.dart';
-import 'package:weather_app/components/my_square_tile.dart';
 import 'package:weather_app/components/my_textfield.dart';
 import 'package:weather_app/components/my_loader.dart';
 import 'package:weather_app/components/my_message.dart';
-import 'package:weather_app/pages/signup_page.dart';
-import 'package:weather_app/pages/weather_page.dart';
+import 'package:weather_app/pages/login_page.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class SignupPage extends StatefulWidget {
+  const SignupPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<SignupPage> createState() => _SignupPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _SignupPageState extends State<SignupPage> {
   // Text editing controllers
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  final confirmPasswordController = TextEditingController();
 
   // Loading state
   bool _isLoading = false;
 
   // Password visibility toggle
   bool _isPasswordVisible = false;
+  bool _isConfirmPasswordVisible = false;
 
-  // Implementing the function to log a user in
-  void logUserIn() async {
-    // Check if both fields are filled
-    if (emailController.text.trim().isEmpty || passwordController.text.trim().isEmpty) {
+  // Implementing the function to sign a user up
+  void signUserUp() async {
+    // Check if all fields are filled
+    if (emailController.text.trim().isEmpty || passwordController.text.trim().isEmpty ||confirmPasswordController.text.trim().isEmpty) {
       const MyMessage(
-        message: "Please fill in both fields.",
+        message: "Please fill in all the fields.",
         backgroundColor: Colors.orange,
         textColor: Colors.white,
       ).show();
-      return; // Exit the function early
+      return;
+    }
+
+    // Check if passwords match
+    if (passwordController.text.trim() != confirmPasswordController.text.trim()) {
+      const MyMessage(
+        message: "The passwords don't match, please try again.",
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      ).show();
+      return;
     }
 
     setState(() {
@@ -43,33 +53,54 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      // Create user with Firebase
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
 
       // Show success message
       const MyMessage(
-        message: "Log in was successful!",
+        message: "Sign up was successful!",
         backgroundColor: Colors.green,
         textColor: Colors.white,
       ).show();
 
       // Redirect to login page
-      Navigator.push(context, MaterialPageRoute(builder: (context) => const WeatherPage()));
+      Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginPage()));
     } 
     
-    catch (e) {
-      // Show error message
-      const MyMessage(
-        message: "Invalid credentials, please try again.",
+    on FirebaseAuthException catch (e) {
+      // Handle Firebase-specific errors
+      String errorMessage;
+      switch (e.code) {
+        case 'email-already-in-use':
+          errorMessage = "This email is already in use.";
+          break;
+        case 'invalid-email':
+          errorMessage = "The email address is not valid.";
+          break;
+        case 'weak-password':
+          errorMessage = "The password is too weak.";
+          break;
+        default:
+          errorMessage = "An error occurred. Please try again.";
+      }
+      
+      MyMessage(
+        message: errorMessage,
         backgroundColor: Colors.red,
         textColor: Colors.white,
       ).show();
-    }
+    } 
 
+    confirmPasswordController.clear();
+    passwordController.clear();
+    emailController.clear();
     setState(() { _isLoading = false; });
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -98,7 +129,7 @@ class _LoginPageState extends State<LoginPage> {
 
                       // catchphrase!
                       Text(
-                        'Welcome back to your weather app!',
+                        'Let\'s create an account for you!',
                         style: TextStyle(
                           color: Colors.grey[700],
                           fontSize: 16,
@@ -107,8 +138,8 @@ class _LoginPageState extends State<LoginPage> {
                       ),
 
                       const SizedBox(height: 25),
-
-                      // email textfield
+	  
+					            // email textfield
                       MyTextField(
                         controller: emailController,
                         hintText: 'Email',
@@ -134,81 +165,43 @@ class _LoginPageState extends State<LoginPage> {
                           },
                         ),
                       ),
-
+					  
                       const SizedBox(height: 10),
-
-                      // forgot password?
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 25.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            Text(
-                              'Forgot Password?',
-                              style: TextStyle(color: Colors.grey[600]),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 15),
-
-                      // sign in button
-                      MyButton(
-                        width: 350,
-                        text: "Log in",
-                        onTap: logUserIn,
-                      ),
-
-                      const SizedBox(height: 25),
-
-                      // or continue with
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 25.0),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Divider(
-                                thickness: 0.5,
-                                color: Colors.grey[400],
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                              child: Text(
-                                'Or continue with',
-                                style: TextStyle(color: Colors.grey[700]),
-                              ),
-                            ),
-                            Expanded(
-                              child: Divider(
-                                thickness: 0.5,
-                                color: Colors.grey[400],
-                              ),
-                            ),
-                          ],
+                      
+                      // confirmation password textfield
+                      MyTextField(
+                        controller: confirmPasswordController,
+                        hintText: 'Confirm your password',
+                        obscureText: !_isConfirmPasswordVisible,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                            color: Colors.grey[500],
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+                            });
+                          },
                         ),
                       ),
 
                       const SizedBox(height: 30),
 
-                      // google sign-in button
-                      const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          // google button
-                          SquareTile(imagePath: 'assets/google.webp'),
-                        ],
+                      // sign up button
+                      MyButton(
+                        width: 350,
+                        text: "Sign up",
+                        onTap: signUserUp,
                       ),
 
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 30),
 
-                      // not a member? register now
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Not a member?',
+                            'Already have an account?',
                             style: TextStyle(color: Colors.grey[700]),
                           ),
                           const SizedBox(width: 4),
@@ -217,12 +210,12 @@ class _LoginPageState extends State<LoginPage> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const SignupPage(),
+                                  builder: (context) => const LoginPage(),
                                 ),
                               );
                             },
                             child: const Text(
-                              'Register now',
+                              'Log in now',
                               style: TextStyle(
                                 color: Colors.blue,
                                 fontWeight: FontWeight.bold,
@@ -231,7 +224,8 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 100),
+
+                      const SizedBox(height: 70),
                     ],
                   ),
                 ),

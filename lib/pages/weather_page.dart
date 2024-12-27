@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:lottie/lottie.dart';
+import 'package:weather_app/components/my_message.dart';
 import 'package:weather_app/models/weather_model.dart';
 import 'package:weather_app/services/weather_service.dart';
 import 'package:weather_app/components/my_button.dart';
@@ -25,7 +26,7 @@ class _WeatherPageState extends State<WeatherPage> {
   bool _isLoading = false;
 
   // Text editing controller for the city field
-  final TextEditingController _cityController = TextEditingController();
+  final cityController = TextEditingController();
 
   // List of predefined city suggestions
   final List<String> _citySuggestions = [
@@ -92,8 +93,8 @@ class _WeatherPageState extends State<WeatherPage> {
 
   // Function to reset the search field and fetch current city weather
   void resetSearch() {
-  _cityController.clear(); // Clear the text field
-  _fetchWeather(); // Fetch weather for the current city
+    cityController.clear(); // Clear the text field
+    _fetchWeather(); // Fetch weather for the current city
   }
 
   // Function to get the weather condition icon
@@ -162,6 +163,7 @@ class _WeatherPageState extends State<WeatherPage> {
                     children: [
                       Expanded(
                         child: Autocomplete<String>(
+                          
                           optionsBuilder: (TextEditingValue textEditingValue) {
                             if (textEditingValue.text.isEmpty) {
                               return const Iterable<String>.empty();
@@ -169,18 +171,19 @@ class _WeatherPageState extends State<WeatherPage> {
                             return _citySuggestions.where((String city) =>
                                 city.toLowerCase().startsWith(textEditingValue.text.toLowerCase()));
                           },
+                          
                           displayStringForOption: (String option) => option,
                           fieldViewBuilder: (context, autocompleteController, focusNode, onFieldSubmitted) {
-                            // Synchronize Autocomplete's internal controller with _cityController
-                            _cityController.addListener(() {
-                              if (_cityController.text != autocompleteController.text) {
-                                autocompleteController.text = _cityController.text;
+                            // Synchronize Autocomplete's internal controller with cityController
+                            cityController.addListener(() {
+                              if (cityController.text != autocompleteController.text) {
+                                autocompleteController.text = cityController.text;
                               }
                             });
 
                             autocompleteController.addListener(() {
-                              if (autocompleteController.text != _cityController.text) {
-                                _cityController.text = autocompleteController.text;
+                              if (autocompleteController.text != cityController.text) {
+                                cityController.text = autocompleteController.text;
                               }
                             });
 
@@ -193,8 +196,9 @@ class _WeatherPageState extends State<WeatherPage> {
                               ),
                             );
                           },
+
                           onSelected: (String selection) {
-                            _cityController.text = selection; // Update _cityController when a suggestion is selected
+                            cityController.text = selection; // Update _cityController when a suggestion is selected
                           },
                         ),
                       ),
@@ -208,23 +212,25 @@ class _WeatherPageState extends State<WeatherPage> {
                         icon: const Icon(Icons.search, color: Colors.white, size: 24),
                         onTap: () {
                           FocusScope.of(context).unfocus();
-                          final city = _cityController.text.trim();
+                          final city = cityController.text.trim();
+                          
                           if (city.isNotEmpty) {
                             _fetchWeather(city: city);
-                          } else {
-                            Fluttertoast.showToast(
-                              msg: "Please enter a city name",
-                              toastLength: Toast.LENGTH_SHORT,
-                              gravity: ToastGravity.BOTTOM,
+                          } 
+                          
+                          else {
+                            const MyMessage(
+                              message: "Please enter a city name",
                               backgroundColor: Colors.orange,
                               textColor: Colors.white,
-                            );
+                            ).show();                            
                           }
                         },
                       ),
                     ],
                   ),
                 ),
+
                 const SizedBox(height: 20),
 
                 // Conditional weather info or loader
@@ -266,7 +272,7 @@ class _WeatherPageState extends State<WeatherPage> {
                 // Reset button
                 MyButton(
                   width: 200,
-                  text: "Reset",
+                  text: "Refresh",
                   icon: const Icon(Icons.refresh, color: Colors.white, size: 24),
                   onTap: resetSearch,
                 ),
