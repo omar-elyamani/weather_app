@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:weather_app/pages/auth_page.dart';
+import 'package:weather_app/pages/login_page.dart';
+import 'package:weather_app/pages/signup_page.dart';
+import 'package:weather_app/pages/weather_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
@@ -30,15 +33,17 @@ class _MyAppState extends State<MyApp> {
   // Function to update theme mode based on time
   void _updateThemeBasedOnTime() {
     final now = TimeOfDay.now();
-    const sunset = TimeOfDay(hour: 18, minute: 30); 
-    final String currentRoute = ModalRoute.of(context)?.settings.name ?? '';
+    const sunset = TimeOfDay(hour: 18, minute: 30);
 
     // Check if current time is past sunset
-    if (now.hour > sunset.hour || (now.hour == sunset.hour && now.minute >= sunset.minute) || currentRoute == '/login_page') {
-      setState(() {_themeMode = ThemeMode.dark;} );
-    } 
-    else {
-      setState(() {_themeMode = ThemeMode.light;} );
+    if (now.hour > sunset.hour || (now.hour == sunset.hour && now.minute >= sunset.minute)) {
+      setState(() {
+        _themeMode = ThemeMode.dark;
+      });
+    } else {
+      setState(() {
+        _themeMode = ThemeMode.light;
+      });
     }
   }
 
@@ -49,7 +54,17 @@ class _MyAppState extends State<MyApp> {
       theme: ThemeData.light(),
       darkTheme: ThemeData.dark(),
       themeMode: _themeMode, // Apply the current theme mode
-      home: const AuthPage(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const AuthPage(),
+        '/login': (context) => LoginPage(onTap: () {
+              Navigator.pushReplacementNamed(context, '/signup');
+            }),
+        '/signup': (context) => SignupPage(onTap: () {
+              Navigator.pushReplacementNamed(context, '/login');
+            }),
+        '/weather': (context) => const WeatherPage(),
+      },
     );
   }
 }

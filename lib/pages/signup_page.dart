@@ -4,10 +4,10 @@ import 'package:weather_app/components/my_button.dart';
 import 'package:weather_app/components/my_textfield.dart';
 import 'package:weather_app/components/my_loader.dart';
 import 'package:weather_app/components/my_message.dart';
-import 'package:weather_app/pages/login_page.dart';
 
 class SignupPage extends StatefulWidget {
-  const SignupPage({super.key});
+  final Function()? onTap;
+  const SignupPage({super.key, required this.onTap});
 
   @override
   State<SignupPage> createState() => _SignupPageState();
@@ -67,7 +67,7 @@ class _SignupPageState extends State<SignupPage> {
       ).show();
 
       // Redirect to login page
-      Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginPage()));
+      Navigator.pushReplacementNamed(context, '/login');
     } 
     
     on FirebaseAuthException catch (e) {
@@ -206,14 +206,7 @@ class _SignupPageState extends State<SignupPage> {
                           ),
                           const SizedBox(width: 4),
                           GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const LoginPage(),
-                                ),
-                              );
-                            },
+                            onTap: widget.onTap,
                             child: const Text(
                               'Log in now',
                               style: TextStyle(

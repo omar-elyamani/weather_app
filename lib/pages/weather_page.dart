@@ -125,7 +125,7 @@ class _WeatherPageState extends State<WeatherPage> {
   // Function to log the user out
   void logUserOut() async {
     await FirebaseAuth.instance.signOut();
-    Navigator.pushReplacementNamed(context, '/login_page.dart');
+    Navigator.pushReplacementNamed(context, '/login');
   }
 
   @override

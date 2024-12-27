@@ -5,11 +5,10 @@ import 'package:weather_app/components/my_square_tile.dart';
 import 'package:weather_app/components/my_textfield.dart';
 import 'package:weather_app/components/my_loader.dart';
 import 'package:weather_app/components/my_message.dart';
-import 'package:weather_app/pages/signup_page.dart';
-import 'package:weather_app/pages/weather_page.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  final Function()? onTap;
+  const LoginPage({super.key, required this.onTap});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -55,8 +54,8 @@ class _LoginPageState extends State<LoginPage> {
         textColor: Colors.white,
       ).show();
 
-      // Redirect to login page
-      Navigator.push(context, MaterialPageRoute(builder: (context) => const WeatherPage()));
+      // Redirect to weather page
+      Navigator.pushReplacementNamed(context, '/weather');
     } 
     
     catch (e) {
@@ -213,14 +212,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                           const SizedBox(width: 4),
                           GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const SignupPage(),
-                                ),
-                              );
-                            },
+                            onTap: widget.onTap,
                             child: const Text(
                               'Register now',
                               style: TextStyle(
