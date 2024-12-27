@@ -31,16 +31,14 @@ class _MyAppState extends State<MyApp> {
   void _updateThemeBasedOnTime() {
     final now = TimeOfDay.now();
     const sunset = TimeOfDay(hour: 18, minute: 30); 
+    final String currentRoute = ModalRoute.of(context)?.settings.name ?? '';
 
     // Check if current time is past sunset
-    if (now.hour > sunset.hour || (now.hour == sunset.hour && now.minute >= sunset.minute)) {
-      setState(() {
-        _themeMode = ThemeMode.dark;
-      });
-    } else {
-      setState(() {
-        _themeMode = ThemeMode.light;
-      });
+    if (now.hour > sunset.hour || (now.hour == sunset.hour && now.minute >= sunset.minute) || currentRoute == '/login_page') {
+      setState(() {_themeMode = ThemeMode.dark;} );
+    } 
+    else {
+      setState(() {_themeMode = ThemeMode.light;} );
     }
   }
 
