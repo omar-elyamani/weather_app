@@ -22,14 +22,16 @@ class _SignupPageState extends State<SignupPage> {
   // Loading state
   bool _isLoading = false;
 
-  // Password visibility toggle
+  // Password visibility toggles
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
 
-  // Implementing the function to sign a user up
+  // Function to sign the user up
   void signUserUp() async {
     // Check if all fields are filled
-    if (emailController.text.trim().isEmpty || passwordController.text.trim().isEmpty ||confirmPasswordController.text.trim().isEmpty) {
+    if (emailController.text.trim().isEmpty ||
+        passwordController.text.trim().isEmpty ||
+        confirmPasswordController.text.trim().isEmpty) {
       const MyMessage(
         message: "Please fill in all the fields.",
         backgroundColor: Colors.orange,
@@ -68,9 +70,7 @@ class _SignupPageState extends State<SignupPage> {
 
       // Redirect to login page
       Navigator.pushReplacementNamed(context, '/login');
-    } 
-    
-    on FirebaseAuthException catch (e) {
+    } on FirebaseAuthException catch (e) {
       // Handle Firebase-specific errors
       String errorMessage;
       switch (e.code) {
@@ -86,28 +86,28 @@ class _SignupPageState extends State<SignupPage> {
         default:
           errorMessage = "An error occurred. Please try again.";
       }
-      
+
       MyMessage(
         message: errorMessage,
         backgroundColor: Colors.red,
         textColor: Colors.white,
       ).show();
-    } 
+    }
 
     confirmPasswordController.clear();
     passwordController.clear();
     emailController.clear();
-    setState(() { _isLoading = false; });
+    setState(() {
+      _isLoading = false;
+    });
   }
-
-
 
   @override
   Widget build(BuildContext context) {
     return MyLoader(
       isLoading: _isLoading, // Display loader when _isLoading is true
       child: Scaffold(
-        backgroundColor: Colors.grey[300],
+        backgroundColor: Theme.of(context).colorScheme.background, // Dynamic background color
         body: SafeArea(
           child: Center(
             child: SingleChildScrollView(
@@ -127,19 +127,16 @@ class _SignupPageState extends State<SignupPage> {
                         color: Colors.blue[900],
                       ),
 
-                      // catchphrase!
+                      // Catchphrase
                       Text(
                         'Let\'s create an account for you!',
-                        style: TextStyle(
-                          color: Colors.grey[700],
-                          fontSize: 16,
-                        ),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 16),
                         textAlign: TextAlign.center,
                       ),
 
                       const SizedBox(height: 25),
-	  
-					            // email textfield
+
+                      // Email textfield
                       MyTextField(
                         controller: emailController,
                         hintText: 'Email',
@@ -148,7 +145,7 @@ class _SignupPageState extends State<SignupPage> {
 
                       const SizedBox(height: 10),
 
-                      // password textfield
+                      // Password textfield
                       MyTextField(
                         controller: passwordController,
                         hintText: 'Password',
@@ -156,7 +153,7 @@ class _SignupPageState extends State<SignupPage> {
                         suffixIcon: IconButton(
                           icon: Icon(
                             _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                            color: Colors.grey[500],
+                            color: Theme.of(context).iconTheme.color, // Dynamic icon color
                           ),
                           onPressed: () {
                             setState(() {
@@ -165,18 +162,20 @@ class _SignupPageState extends State<SignupPage> {
                           },
                         ),
                       ),
-					  
+
                       const SizedBox(height: 10),
-                      
-                      // confirmation password textfield
+
+                      // Confirm password textfield
                       MyTextField(
                         controller: confirmPasswordController,
                         hintText: 'Confirm your password',
                         obscureText: !_isConfirmPasswordVisible,
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                            color: Colors.grey[500],
+                            _isConfirmPasswordVisible
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                            color: Theme.of(context).iconTheme.color, // Dynamic icon color
                           ),
                           onPressed: () {
                             setState(() {
@@ -188,7 +187,7 @@ class _SignupPageState extends State<SignupPage> {
 
                       const SizedBox(height: 30),
 
-                      // sign up button
+                      // Sign up button
                       MyButton(
                         width: 350,
                         text: "Sign up",
@@ -197,12 +196,13 @@ class _SignupPageState extends State<SignupPage> {
 
                       const SizedBox(height: 30),
 
+                      // Redirect to login
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
                             'Already have an account?',
-                            style: TextStyle(color: Colors.grey[700]),
+                            style: Theme.of(context).textTheme.bodySmall,
                           ),
                           const SizedBox(width: 4),
                           GestureDetector(

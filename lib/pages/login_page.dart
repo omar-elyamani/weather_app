@@ -56,9 +56,7 @@ class _LoginPageState extends State<LoginPage> {
 
       // Redirect to weather page
       Navigator.pushReplacementNamed(context, '/weather');
-    } 
-    
-    catch (e) {
+    } catch (e) {
       // Show error message
       const MyMessage(
         message: "Invalid credentials, please try again.",
@@ -67,7 +65,9 @@ class _LoginPageState extends State<LoginPage> {
       ).show();
     }
 
-    setState(() { _isLoading = false; });
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   @override
@@ -75,7 +75,7 @@ class _LoginPageState extends State<LoginPage> {
     return MyLoader(
       isLoading: _isLoading, // Display loader when _isLoading is true
       child: Scaffold(
-        backgroundColor: Colors.grey[300],
+        backgroundColor: Theme.of(context).colorScheme.background,
         body: SafeArea(
           child: Center(
             child: SingleChildScrollView(
@@ -95,19 +95,16 @@ class _LoginPageState extends State<LoginPage> {
                         color: Colors.blue[900],
                       ),
 
-                      // catchphrase!
+                      // Catchphrase!
                       Text(
                         'Welcome back to your weather app!',
-                        style: TextStyle(
-                          color: Colors.grey[700],
-                          fontSize: 16,
-                        ),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 16),
                         textAlign: TextAlign.center,
                       ),
 
                       const SizedBox(height: 25),
 
-                      // email textfield
+                      // Email textfield
                       MyTextField(
                         controller: emailController,
                         hintText: 'Email',
@@ -116,7 +113,7 @@ class _LoginPageState extends State<LoginPage> {
 
                       const SizedBox(height: 10),
 
-                      // password textfield
+                      // Password textfield
                       MyTextField(
                         controller: passwordController,
                         hintText: 'Password',
@@ -124,7 +121,7 @@ class _LoginPageState extends State<LoginPage> {
                         suffixIcon: IconButton(
                           icon: Icon(
                             _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                            color: Colors.grey[500],
+                            color: Theme.of(context).iconTheme.color,
                           ),
                           onPressed: () {
                             setState(() {
@@ -136,7 +133,7 @@ class _LoginPageState extends State<LoginPage> {
 
                       const SizedBox(height: 10),
 
-                      // forgot password?
+                      // Forgot password?
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 25.0),
                         child: Row(
@@ -144,7 +141,7 @@ class _LoginPageState extends State<LoginPage> {
                           children: [
                             Text(
                               'Forgot Password?',
-                              style: TextStyle(color: Colors.grey[600]),
+                              style: Theme.of(context).textTheme.bodySmall,
                             ),
                           ],
                         ),
@@ -152,7 +149,7 @@ class _LoginPageState extends State<LoginPage> {
 
                       const SizedBox(height: 15),
 
-                      // sign in button
+                      // Sign in button
                       MyButton(
                         width: 350,
                         text: "Log in",
@@ -161,7 +158,7 @@ class _LoginPageState extends State<LoginPage> {
 
                       const SizedBox(height: 25),
 
-                      // or continue with
+                      // Or continue with
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 25.0),
                         child: Row(
@@ -169,20 +166,20 @@ class _LoginPageState extends State<LoginPage> {
                             Expanded(
                               child: Divider(
                                 thickness: 0.5,
-                                color: Colors.grey[400],
+                                color: Theme.of(context).dividerColor,
                               ),
                             ),
                             Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 10.0),
                               child: Text(
                                 'Or continue with',
-                                style: TextStyle(color: Colors.grey[700]),
+                                style: Theme.of(context).textTheme.bodySmall,
                               ),
                             ),
                             Expanded(
                               child: Divider(
                                 thickness: 0.5,
-                                color: Colors.grey[400],
+                                color: Theme.of(context).dividerColor,
                               ),
                             ),
                           ],
@@ -191,24 +188,24 @@ class _LoginPageState extends State<LoginPage> {
 
                       const SizedBox(height: 30),
 
-                      // google sign-in button
+                      // Google sign-in button
                       const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          // google button
+                          // Google button
                           SquareTile(imagePath: 'assets/google.webp'),
                         ],
                       ),
 
                       const SizedBox(height: 20),
 
-                      // not a member? register now
+                      // Not a member? Register now
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
                             'Not a member?',
-                            style: TextStyle(color: Colors.grey[700]),
+                            style: Theme.of(context).textTheme.bodySmall,
                           ),
                           const SizedBox(width: 4),
                           GestureDetector(
