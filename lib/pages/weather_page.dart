@@ -139,7 +139,7 @@ class _WeatherPageState extends State<WeatherPage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue[900],
-        title: const Text("Omar & Yassine weather app", style: TextStyle(color: Colors.white)),
+        title: const Text("Weather app", style: TextStyle(color: Colors.white)),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.white),
