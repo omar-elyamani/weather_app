@@ -158,7 +158,7 @@ class _LoginPageState extends State<LoginPage> {
 
                       const SizedBox(height: 25),
 
-                      // Or continue with
+                      // Or continue with section
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 25.0),
                         child: Row(
@@ -172,7 +172,7 @@ class _LoginPageState extends State<LoginPage> {
                             Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 10.0),
                               child: Text(
-                                'Or continue with',
+                                'Or create account',
                                 style: Theme.of(context).textTheme.bodySmall,
                               ),
                             ),
