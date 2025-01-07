@@ -69,7 +69,7 @@ class _SignupPageState extends State<SignupPage> {
       ).show();
 
       // Redirect to login page
-      Navigator.pushReplacementNamed(context, '/login');
+      Navigator.pushReplacementNamed(context, '/weather');
     } on FirebaseAuthException catch (e) {
       // Handle Firebase-specific errors
       String errorMessage;
