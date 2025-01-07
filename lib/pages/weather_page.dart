@@ -33,7 +33,7 @@ class _WeatherPageState extends State<WeatherPage> {
     'Salé',
     'Rabat',
     'Casablanca',
-    'Marrakech',    
+    'Marrakech',
     'Riyadh',
     'New York',
     'London',
@@ -148,135 +148,140 @@ class _WeatherPageState extends State<WeatherPage> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Row for TextField and Search Button
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Autocomplete<String>(
-                          
-                          optionsBuilder: (TextEditingValue textEditingValue) {
-                            if (textEditingValue.text.isEmpty) {
-                              return const Iterable<String>.empty();
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await _fetchWeather(
+              city: cityController.text.trim().isEmpty
+                  ? null
+                  : cityController.text.trim());
+        },
+        child: SingleChildScrollView(
+          physics:
+              const AlwaysScrollableScrollPhysics(), // Allow pull-to-refresh even when content is small
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Row for TextField and Search Button
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0, vertical: 20.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Autocomplete<String>(
+                            optionsBuilder:
+                                (TextEditingValue textEditingValue) {
+                              if (textEditingValue.text.isEmpty) {
+                                return const Iterable<String>.empty();
+                              }
+                              return _citySuggestions.where((String city) =>
+                                  city.toLowerCase().startsWith(
+                                      textEditingValue.text.toLowerCase()));
+                            },
+                            displayStringForOption: (String option) => option,
+                            fieldViewBuilder: (context, autocompleteController,
+                                focusNode, onFieldSubmitted) {
+                              cityController.addListener(() {
+                                if (cityController.text !=
+                                    autocompleteController.text) {
+                                  autocompleteController.text =
+                                      cityController.text;
+                                }
+                              });
+                              autocompleteController.addListener(() {
+                                if (autocompleteController.text !=
+                                    cityController.text) {
+                                  cityController.text =
+                                      autocompleteController.text;
+                                }
+                              });
+                              return TextField(
+                                controller: autocompleteController,
+                                focusNode: focusNode,
+                                decoration: const InputDecoration(
+                                  border: OutlineInputBorder(),
+                                  hintText: 'Enter a city name',
+                                ),
+                              );
+                            },
+                            onSelected: (String selection) {
+                              cityController.text = selection;
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        // Search button
+                        MyButton(
+                          width: 120,
+                          text: "Search",
+                          icon: const Icon(Icons.search,
+                              color: Colors.white, size: 24),
+                          onTap: () {
+                            FocusScope.of(context).unfocus();
+                            final city = cityController.text.trim();
+                            if (city.isNotEmpty) {
+                              _fetchWeather(city: city);
+                            } else {
+                              const MyMessage(
+                                message: "Please enter a city name",
+                                backgroundColor: Colors.orange,
+                                textColor: Colors.white,
+                              ).show();
                             }
-                            return _citySuggestions.where((String city) =>
-                                city.toLowerCase().startsWith(textEditingValue.text.toLowerCase()));
-                          },
-                          
-                          displayStringForOption: (String option) => option,
-                          fieldViewBuilder: (context, autocompleteController, focusNode, onFieldSubmitted) {
-                            // Synchronize Autocomplete's internal controller with cityController
-                            cityController.addListener(() {
-                              if (cityController.text != autocompleteController.text) {
-                                autocompleteController.text = cityController.text;
-                              }
-                            });
-
-                            autocompleteController.addListener(() {
-                              if (autocompleteController.text != cityController.text) {
-                                cityController.text = autocompleteController.text;
-                              }
-                            });
-
-                            return TextField(
-                              controller: autocompleteController, // Use Autocomplete's internal controller
-                              focusNode: focusNode,
-                              decoration: const InputDecoration(
-                                border: OutlineInputBorder(),
-                                hintText: 'Enter a city name',
-                              ),
-                            );
-                          },
-
-                          onSelected: (String selection) {
-                            cityController.text = selection; // Update _cityController when a suggestion is selected
                           },
                         ),
-                      ),
-
-                      const SizedBox(width: 10),
-
-                      // Search button
-                      MyButton(
-                        width: 120,
-                        text: "Search",
-                        icon: const Icon(Icons.search, color: Colors.white, size: 24),
-                        onTap: () {
-                          FocusScope.of(context).unfocus();
-                          final city = cityController.text.trim();
-                          
-                          if (city.isNotEmpty) {
-                            _fetchWeather(city: city);
-                          } 
-                          
-                          else {
-                            const MyMessage(
-                              message: "Please enter a city name",
-                              backgroundColor: Colors.orange,
-                              textColor: Colors.white,
-                            ).show();                            
-                          }
-                        },
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // Conditional weather info or loader
-                MyLoader(
-                  isLoading: _isLoading,
-                  child: Column(
-                    children: [
-                      // Weather condition
-                      Text(
-                        _weather?.cityName ?? "Loading your city...",
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 10),
-
-                      // Weather temperature
-                      Text(
-                        _weather != null ? "${_weather?.temperature}°C" : "",
-                        style: const TextStyle(fontSize: 24),
-                      ),
-                      const SizedBox(height: 10),
-
-                      // Weather icon
-                      _weather?.mainCondition != null
-                          ? Lottie.asset(getWeatherConditionIcon(_weather?.mainCondition))
-                          : Container(),
-                      const SizedBox(height: 10),
-
-                      // General weather condition
-                      Text(
-                        _weather?.mainCondition ?? "",
-                        style: const TextStyle(fontSize: 20),
-                      ),
-                    ],
+                  const SizedBox(height: 20),
+                  // Conditional weather info or loader
+                  MyLoader(
+                    isLoading: _isLoading,
+                    child: Column(
+                      children: [
+                        // City name
+                        Text(
+                          _weather?.cityName ?? "Loading your city...",
+                          style: const TextStyle(
+                              fontSize: 30, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 10),
+                        // Weather temperature and humidity
+                        Column(
+                          children: [
+                            Text(
+                              _weather != null
+                                  ? "${_weather?.temperature}°C"
+                                  : "",
+                              style: const TextStyle(fontSize: 24),
+                            ),
+                            Text(
+                              _weather != null ? "${_weather?.humidity}%" : "",
+                              style: const TextStyle(fontSize: 24),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        // Weather icon
+                        _weather?.mainCondition != null
+                            ? Lottie.asset(getWeatherConditionIcon(
+                                _weather?.mainCondition))
+                            : Container(),
+                        const SizedBox(height: 8),
+                        // General weather condition
+                        Text(
+                          _weather?.mainCondition ?? "",
+                          style: const TextStyle(fontSize: 20),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // Reset button
-                MyButton(
-                  width: 200,
-                  text: "Refresh",
-                  icon: const Icon(Icons.refresh, color: Colors.white, size: 24),
-                  onTap: resetSearch,
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

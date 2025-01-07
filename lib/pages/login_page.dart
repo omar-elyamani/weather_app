@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:weather_app/components/my_button.dart';
-import 'package:weather_app/components/my_square_tile.dart';
+//import 'package:weather_app/components/my_square_tile.dart';
 import 'package:weather_app/components/my_textfield.dart';
 import 'package:weather_app/components/my_loader.dart';
 import 'package:weather_app/components/my_message.dart';
@@ -140,7 +140,7 @@ class _LoginPageState extends State<LoginPage> {
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
                             Text(
-                              'Forgot Password?',
+                              '',
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
                           ],
@@ -189,13 +189,13 @@ class _LoginPageState extends State<LoginPage> {
                       const SizedBox(height: 30),
 
                       // Google sign-in button
-                      const Row(
+                     /* const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           // Google button
                           SquareTile(imagePath: 'assets/google.webp'),
                         ],
-                      ),
+                      ),*/
 
                       const SizedBox(height: 20),
 
