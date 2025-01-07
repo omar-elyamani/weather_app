@@ -13,7 +13,7 @@ class WeatherService {
   //Fettching the weather method (GET)
   Future<WeatherModel> getWeather(String city) async {
     final url = '$BASE_URL?q=$city&appid=$API_KEY&units=metric'; //preparing the URL 
-    final response = await http.get(Uri.parse(url));            //fetching from the URL
+    final response = await http.get(Uri.parse(url));             //fetching from the URL
 
     if (response.statusCode == 200) {
       return WeatherModel.fromJson(jsonDecode(response.body));
