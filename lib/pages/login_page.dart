@@ -8,7 +8,15 @@ import 'package:weather_app/components/my_message.dart';
 
 class LoginPage extends StatefulWidget {
   final Function()? onTap;
-  const LoginPage({super.key, required this.onTap});
+  final VoidCallback toggleTheme;
+  final bool isDarkMode;
+  
+  const LoginPage({
+    super.key,
+    required this.onTap,
+    required this.toggleTheme,
+    required this.isDarkMode
+  });
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -75,15 +83,28 @@ class _LoginPageState extends State<LoginPage> {
     return MyLoader(
       isLoading: _isLoading, // Display loader when _isLoading is true
       child: Scaffold(
+        appBar: AppBar(
+          actions: [
+            IconButton(
+              icon: Icon(
+                widget.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+              ),
+              onPressed: widget.toggleTheme,
+            ),
+          ],
+        ),
+        
         backgroundColor: Theme.of(context).colorScheme.background,
         body: SafeArea(
           child: Center(
             child: SingleChildScrollView(
+
               child: ConstrainedBox(
                 constraints: BoxConstraints(
                   maxWidth: 400, // Optional: Constrain the width for larger devices
                   minHeight: MediaQuery.of(context).size.height, // Take full height of screen
                 ),
+
                 child: IntrinsicHeight(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -220,7 +241,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 100),
+                      const SizedBox(height: 150),
                     ],
                   ),
                 ),

@@ -4,7 +4,14 @@ import 'package:weather_app/pages/login_or_signup_page.dart';
 import 'package:weather_app/pages/weather_page.dart';
 
 class AuthPage extends StatelessWidget {
-  const AuthPage({super.key});
+  final VoidCallback toggleTheme;
+  final bool isDarkMode;
+
+  const AuthPage({
+    super.key,
+    required this.toggleTheme,
+    required this.isDarkMode,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -14,12 +21,18 @@ class AuthPage extends StatelessWidget {
         builder: (context, snapshot) {
           // User is logged in
           if (snapshot.hasData) {
-            return const WeatherPage();
+            return WeatherPage(
+              toggleTheme: toggleTheme,
+              isDarkMode: isDarkMode,
+            );
           }
 
           // User is NOT logged in
           else {
-            return const LoginOrSignupPage();
+            return LoginOrSignupPage(
+              toggleTheme: toggleTheme,
+              isDarkMode: isDarkMode,
+            );
           }
         },
       ),

@@ -1,0 +1,18 @@
+const List<String> citySuggestions = [
+  'Salé',
+  'Rabat',
+  'Casablanca',
+  'Marrakech',
+  'Riyadh',
+  'New York',
+  'London',
+  'Paris',
+  'Tokyo',
+  'Mumbai',
+  'Sydney',
+  'San Francisco',
+  'Cairo',
+  'Toronto',
+  'Berlin',
+  'Dar es Salaam',
+];

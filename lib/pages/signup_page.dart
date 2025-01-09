@@ -7,7 +7,15 @@ import 'package:weather_app/components/my_message.dart';
 
 class SignupPage extends StatefulWidget {
   final Function()? onTap;
-  const SignupPage({super.key, required this.onTap});
+  final VoidCallback toggleTheme;
+  final bool isDarkMode;
+
+  const SignupPage({
+    super.key, 
+    required this.onTap,
+    required this.toggleTheme,
+    required this.isDarkMode,
+  });
 
   @override
   State<SignupPage> createState() => _SignupPageState();
@@ -70,8 +78,9 @@ class _SignupPageState extends State<SignupPage> {
 
       // Redirect to login page
       Navigator.pushReplacementNamed(context, '/weather');
-    } on FirebaseAuthException catch (e) {
-      // Handle Firebase-specific errors
+    } 
+    
+    on FirebaseAuthException catch (e) {
       String errorMessage;
       switch (e.code) {
         case 'email-already-in-use':
@@ -95,11 +104,12 @@ class _SignupPageState extends State<SignupPage> {
     }
 
     confirmPasswordController.clear();
+
     passwordController.clear();
+
     emailController.clear();
-    setState(() {
-      _isLoading = false;
-    });
+
+    setState(() {_isLoading = false;});
   }
 
   @override
@@ -107,15 +117,27 @@ class _SignupPageState extends State<SignupPage> {
     return MyLoader(
       isLoading: _isLoading, // Display loader when _isLoading is true
       child: Scaffold(
+        appBar: AppBar(
+          actions: [
+            IconButton(
+              icon: Icon(
+                widget.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+              ),
+              onPressed: widget.toggleTheme,
+            ),
+          ],
+        ),
+        
         backgroundColor: Theme.of(context).colorScheme.background, // Dynamic background color
         body: SafeArea(
           child: Center(
-            child: SingleChildScrollView(
+            child: SingleChildScrollView(         
               child: ConstrainedBox(
                 constraints: BoxConstraints(
                   maxWidth: 400, // Optional: Constrain the width for larger devices
                   minHeight: MediaQuery.of(context).size.height, // Take full height of screen
                 ),
+
                 child: IntrinsicHeight(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -218,7 +240,7 @@ class _SignupPageState extends State<SignupPage> {
                         ],
                       ),
 
-                      const SizedBox(height: 70),
+                      const SizedBox(height: 150),
                     ],
                   ),
                 ),

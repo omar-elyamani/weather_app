@@ -7,52 +7,39 @@ import 'package:weather_app/models/weather_model.dart';
 import 'package:weather_app/services/weather_service.dart';
 import 'package:weather_app/components/my_button.dart';
 import 'package:weather_app/components/my_loader.dart';
+import 'package:weather_app/services/city_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class WeatherPage extends StatefulWidget {
-  const WeatherPage({super.key});
+  final VoidCallback toggleTheme; // Function to toggle theme
+  final bool isDarkMode; // Indicates if dark mode is active
+
+  const WeatherPage({
+    super.key,
+    required this.toggleTheme,
+    required this.isDarkMode,
+  });
 
   @override
   State<WeatherPage> createState() => _WeatherPageState();
 }
 
 class _WeatherPageState extends State<WeatherPage> {
-  // Weather service instance
-  final _weatherService = WeatherService('82e05f089d6ebf7888e999452491f6c5');
 
-  // Weather model object
+  late WeatherService _weatherService;
+  
   WeatherModel? _weather;
 
-  // Loading state
   bool _isLoading = false;
 
-  // Text editing controller for the city field
   final cityController = TextEditingController();
 
-  // List of predefined city suggestions
-  final List<String> _citySuggestions = [
-    'Salé',
-    'Rabat',
-    'Casablanca',
-    'Marrakech',
-    'Riyadh',
-    'New York',
-    'London',
-    'Paris',
-    'Tokyo',
-    'Mumbai',
-    'Sydney',
-    'San Francisco',
-    'Cairo',
-    'Toronto',
-    'Berlin',
-    'Dar es Salaam',
-  ];
+  final List<String> _citySuggestions = citySuggestions;
 
-  // Function to fetch weather
+  // Fetch weather function from the API
   _fetchWeather({String? city}) async {
-    setState(() {
-      _isLoading = true;
-    });
+    
+    setState(() {_isLoading = true;});
 
     String targetCity = city ?? await _weatherService.getCurrentCity();
 
@@ -91,13 +78,11 @@ class _WeatherPageState extends State<WeatherPage> {
     }
   }
 
-  // Function to reset the search field and fetch current city weather
   void resetSearch() {
-    cityController.clear(); // Clear the text field
-    _fetchWeather(); // Fetch weather for the current city
+    cityController.clear();
+    _fetchWeather();
   }
 
-  // Function to get the weather condition icon
   String getWeatherConditionIcon(String? condition) {
     if (condition == null) return 'assets/sunny.json';
 
@@ -122,7 +107,6 @@ class _WeatherPageState extends State<WeatherPage> {
     }
   }
 
-  // Function to log the user out
   void logUserOut() async {
     await FirebaseAuth.instance.signOut();
     Navigator.pushReplacementNamed(context, '/login');
@@ -131,6 +115,8 @@ class _WeatherPageState extends State<WeatherPage> {
   @override
   void initState() {
     super.initState();
+    final String weatherApiKey = dotenv.env['WEATHER_API_KEY'] ?? ''; // Access API key here
+    _weatherService = WeatherService(weatherApiKey); // Initialize the service here
     _fetchWeather();
   }
 
@@ -139,8 +125,16 @@ class _WeatherPageState extends State<WeatherPage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue[900],
-        title: const Text("Weather app", style: TextStyle(color: Colors.white)),
+        title: const Text("Weather App", style: TextStyle(color: Colors.white)),
         actions: [
+          IconButton(
+            icon: Icon(
+              widget.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+              color: Colors.white,
+            ),
+            onPressed: widget.toggleTheme,
+            tooltip: "Toggle Theme",
+          ),
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.white),
             onPressed: logUserOut,
@@ -156,16 +150,12 @@ class _WeatherPageState extends State<WeatherPage> {
                   : cityController.text.trim());
         },
         child: SingleChildScrollView(
-          physics:
-              const AlwaysScrollableScrollPhysics(), // Allow pull-to-refresh even when content is small
+          physics: const AlwaysScrollableScrollPhysics(),
           child: Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 20.0),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Row for TextField and Search Button
                   Padding(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16.0, vertical: 20.0),
@@ -214,7 +204,6 @@ class _WeatherPageState extends State<WeatherPage> {
                           ),
                         ),
                         const SizedBox(width: 10),
-                        // Search button
                         MyButton(
                           width: 120,
                           text: "Search",
@@ -238,19 +227,16 @@ class _WeatherPageState extends State<WeatherPage> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  // Conditional weather info or loader
                   MyLoader(
                     isLoading: _isLoading,
                     child: Column(
                       children: [
-                        // City name
                         Text(
                           _weather?.cityName ?? "Loading your city...",
                           style: const TextStyle(
                               fontSize: 30, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 10),
-                        // Weather temperature and humidity
                         Column(
                           children: [
                             Text(
@@ -266,13 +252,12 @@ class _WeatherPageState extends State<WeatherPage> {
                           ],
                         ),
                         const SizedBox(height: 10),
-                        // Weather icon
                         _weather?.mainCondition != null
-                            ? Lottie.asset(getWeatherConditionIcon(
-                                _weather?.mainCondition))
+                            ? Lottie.asset(
+                                getWeatherConditionIcon(
+                                    _weather?.mainCondition))
                             : Container(),
                         const SizedBox(height: 8),
-                        // General weather condition
                         Text(
                           _weather?.mainCondition ?? "",
                           style: const TextStyle(fontSize: 20),

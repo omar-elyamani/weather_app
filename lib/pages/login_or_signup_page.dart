@@ -3,7 +3,14 @@ import 'package:weather_app/pages/login_page.dart';
 import 'package:weather_app/pages/signup_page.dart';
 
 class LoginOrSignupPage extends StatefulWidget {
-  const LoginOrSignupPage({super.key});
+  final VoidCallback toggleTheme;
+  final bool isDarkMode;
+
+  const LoginOrSignupPage({
+    super.key,
+    required this.toggleTheme,
+    required this.isDarkMode,
+  });
 
   @override
   State<LoginOrSignupPage> createState() => _LoginOrSignupPageState();
@@ -25,10 +32,14 @@ class _LoginOrSignupPageState extends State<LoginOrSignupPage> {
     if (showLogin) {
       return LoginPage(
         onTap: togglePages,
+        toggleTheme: widget.toggleTheme,
+        isDarkMode: widget.isDarkMode,
       );
     } else {
       return SignupPage(
         onTap: togglePages,
+        toggleTheme: widget.toggleTheme,
+        isDarkMode: widget.isDarkMode,
       );
     }
   }

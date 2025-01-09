@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:weather_app/pages/auth_page.dart';
+import 'package:weather_app/pages/login_or_signup_page.dart';
 import 'package:weather_app/pages/login_page.dart';
 import 'package:weather_app/pages/signup_page.dart';
 import 'package:weather_app/pages/weather_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform,);
+  await dotenv.load(fileName: ".env");
   runApp(const MyApp());
 }
 
@@ -24,27 +25,12 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   ThemeMode _themeMode = ThemeMode.light;
 
-  @override
-  void initState() {
-    super.initState();
-    _updateThemeBasedOnTime();
-  }
-
-  // Function to update theme mode based on time
-  void _updateThemeBasedOnTime() {
-    final now = TimeOfDay.now();
-    const sunset = TimeOfDay(hour: 18, minute: 30);
-
-    // Check if current time is past sunset
-    if (now.hour > sunset.hour || (now.hour == sunset.hour && now.minute >= sunset.minute)) {
-      setState(() {
-        _themeMode = ThemeMode.dark;
-      });
-    } else {
-      setState(() {
-        _themeMode = ThemeMode.light;
-      });
-    }
+  // Function to toggle the theme mode
+  void _toggleThemeMode() {
+    setState(() {
+      _themeMode =
+          _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    });
   }
 
   @override
@@ -56,14 +42,36 @@ class _MyAppState extends State<MyApp> {
       themeMode: _themeMode, // Apply the current theme mode
       initialRoute: '/',
       routes: {
-        '/': (context) => const AuthPage(),
-        '/login': (context) => LoginPage(onTap: () {
-              Navigator.pushReplacementNamed(context, '/signup');
-            }),
-        '/signup': (context) => SignupPage(onTap: () {
-              Navigator.pushReplacementNamed(context, '/login');
-            }),
-        '/weather': (context) => const WeatherPage(),
+        '/': (context) => AuthPage(
+              toggleTheme: _toggleThemeMode,
+              isDarkMode: _themeMode == ThemeMode.dark,
+            ),
+            
+        '/login': (context) => LoginPage(
+              onTap: () {
+                Navigator.pushReplacementNamed(context, '/signup');
+              },
+              toggleTheme: _toggleThemeMode,
+              isDarkMode: _themeMode == ThemeMode.dark,
+            ),
+
+        '/signup': (context) => SignupPage(
+              onTap: () {
+                Navigator.pushReplacementNamed(context, '/login');
+              },
+              toggleTheme: _toggleThemeMode,
+              isDarkMode: _themeMode == ThemeMode.dark,
+            ),
+
+        '/login_or_signup': (context) => LoginOrSignupPage(
+              toggleTheme: _toggleThemeMode,
+              isDarkMode: _themeMode == ThemeMode.dark,
+            ),
+
+        '/weather': (context) => WeatherPage(
+              toggleTheme: _toggleThemeMode,
+              isDarkMode: _themeMode == ThemeMode.dark,
+            ),
       },
     );
   }
