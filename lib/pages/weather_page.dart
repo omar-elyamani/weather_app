@@ -1,18 +1,14 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:lottie/lottie.dart';
-import 'package:weather_app/components/my_message.dart';
-import 'package:weather_app/models/weather_model.dart';
-import 'package:weather_app/services/weather_service.dart';
 import 'package:weather_app/components/my_button.dart';
 import 'package:weather_app/components/my_loader.dart';
-import 'package:weather_app/services/city_service.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:weather_app/services/authentication/login_service.dart';
+import 'package:weather_app/services/weather/weather_service.dart';
+import 'package:weather_app/services/city/city_service.dart';
 
 class WeatherPage extends StatefulWidget {
-  final VoidCallback toggleTheme; // Function to toggle theme
-  final bool isDarkMode; // Indicates if dark mode is active
+  final VoidCallback toggleTheme;
+  final bool isDarkMode;
 
   const WeatherPage({
     super.key,
@@ -25,99 +21,27 @@ class WeatherPage extends StatefulWidget {
 }
 
 class _WeatherPageState extends State<WeatherPage> {
-
-  late WeatherService _weatherService;
-  
-  WeatherModel? _weather;
-
-  bool _isLoading = false;
-
-  final cityController = TextEditingController();
-
-  final List<String> _citySuggestions = citySuggestions;
-
-  // Fetch weather function from the API
-  _fetchWeather({String? city}) async {
-    
-    setState(() {_isLoading = true;});
-
-    String targetCity = city ?? await _weatherService.getCurrentCity();
-
-    if (targetCity.isEmpty) {
-      Fluttertoast.showToast(
-        msg: "Please enter a city name",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.orange,
-        textColor: Colors.white,
-      );
-      setState(() {
-        _isLoading = false;
-      });
-      return;
-    }
-
-    try {
-      final weather = await _weatherService.getWeather(targetCity);
-      setState(() {
-        _weather = weather;
-        _isLoading = false;
-      });
-    } catch (e) {
-      Fluttertoast.showToast(
-        msg: "Error fetching the weather!",
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-        fontSize: 16.0,
-      );
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
-  void resetSearch() {
-    cityController.clear();
-    _fetchWeather();
-  }
-
-  String getWeatherConditionIcon(String? condition) {
-    if (condition == null) return 'assets/sunny.json';
-
-    switch (condition.toLowerCase()) {
-      case 'clouds':
-      case 'mist':
-      case 'smoke':
-      case 'haze':
-      case 'dust':
-      case 'fog':
-        return 'assets/cloudy.json';
-      case 'rain':
-      case 'drizzle':
-      case 'shower rain':
-        return 'assets/rainy.json';
-      case 'thunderstorm':
-        return 'assets/thunder.json';
-      case 'clear':
-        return 'assets/sunny.json';
-      default:
-        return 'assets/sunny.json';
-    }
-  }
-
-  void logUserOut() async {
-    await FirebaseAuth.instance.signOut();
-    Navigator.pushReplacementNamed(context, '/login');
-  }
+  late final WeatherService weatherService;
+  late final LoginService loginService;
 
   @override
   void initState() {
     super.initState();
-    final String weatherApiKey = dotenv.env['WEATHER_API_KEY'] ?? ''; // Access API key here
-    _weatherService = WeatherService(weatherApiKey); // Initialize the service here
+    weatherService = WeatherService();
+    loginService = LoginService();
     _fetchWeather();
+  }
+
+  Future<void> _fetchWeather() async {
+    setState(() {
+      weatherService.isLoading = true;
+    });
+
+    await weatherService.fetchWeather();
+
+    setState(() {
+      weatherService.isLoading = false;
+    });
   }
 
   @override
@@ -133,21 +57,23 @@ class _WeatherPageState extends State<WeatherPage> {
               color: Colors.white,
             ),
             onPressed: widget.toggleTheme,
-            tooltip: "Toggle Theme",
           ),
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.white),
-            onPressed: logUserOut,
             tooltip: "Log Out",
+            onPressed: () async {
+              await loginService.logUserOut(context);
+              weatherService.dispose();
+              Navigator.pushReplacementNamed(context, '/login');
+            },
           ),
         ],
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          await _fetchWeather(
-              city: cityController.text.trim().isEmpty
-                  ? null
-                  : cityController.text.trim());
+          String currentCity = await weatherService.getCurrentCity();
+          await weatherService.fetchWeather(city: currentCity);
+          setState(() {});
         },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -163,34 +89,41 @@ class _WeatherPageState extends State<WeatherPage> {
                       children: [
                         Expanded(
                           child: Autocomplete<String>(
-                            optionsBuilder:
-                                (TextEditingValue textEditingValue) {
+                            optionsBuilder: (TextEditingValue textEditingValue) {
                               if (textEditingValue.text.isEmpty) {
                                 return const Iterable<String>.empty();
                               }
-                              return _citySuggestions.where((String city) =>
+                              return citySuggestions.where((String city) =>
                                   city.toLowerCase().startsWith(
                                       textEditingValue.text.toLowerCase()));
                             },
-                            displayStringForOption: (String option) => option,
-                            fieldViewBuilder: (context, autocompleteController,
-                                focusNode, onFieldSubmitted) {
-                              cityController.addListener(() {
-                                if (cityController.text !=
-                                    autocompleteController.text) {
-                                  autocompleteController.text =
-                                      cityController.text;
+                            onSelected: (String selection) {
+                              weatherService.cityController.text = selection;
+                            },
+                            fieldViewBuilder: (
+                              BuildContext context,
+                              TextEditingController textEditingController,
+                              FocusNode focusNode,
+                              VoidCallback onFieldSubmitted,
+                            ) {
+                              // Sync the Autocomplete text controller with cityController
+                              weatherService.cityController.addListener(() {
+                                if (weatherService.cityController.text !=
+                                    textEditingController.text) {
+                                  textEditingController.text =
+                                      weatherService.cityController.text;
                                 }
                               });
-                              autocompleteController.addListener(() {
-                                if (autocompleteController.text !=
-                                    cityController.text) {
-                                  cityController.text =
-                                      autocompleteController.text;
+                              textEditingController.addListener(() {
+                                if (textEditingController.text !=
+                                    weatherService.cityController.text) {
+                                  weatherService.cityController.text =
+                                      textEditingController.text;
                                 }
                               });
+
                               return TextField(
-                                controller: autocompleteController,
+                                controller: textEditingController,
                                 focusNode: focusNode,
                                 decoration: const InputDecoration(
                                   border: OutlineInputBorder(),
@@ -198,29 +131,19 @@ class _WeatherPageState extends State<WeatherPage> {
                                 ),
                               );
                             },
-                            onSelected: (String selection) {
-                              cityController.text = selection;
-                            },
                           ),
                         ),
                         const SizedBox(width: 10),
                         MyButton(
                           width: 120,
                           text: "Search",
-                          icon: const Icon(Icons.search,
-                              color: Colors.white, size: 24),
-                          onTap: () {
-                            FocusScope.of(context).unfocus();
-                            final city = cityController.text.trim();
-                            if (city.isNotEmpty) {
-                              _fetchWeather(city: city);
-                            } else {
-                              const MyMessage(
-                                message: "Please enter a city name",
-                                backgroundColor: Colors.orange,
-                                textColor: Colors.white,
-                              ).show();
-                            }
+                          icon: const Icon(Icons.search, color: Colors.white),
+                          onTap: () async {
+                            await weatherService.fetchWeather(
+                              city:
+                                  weatherService.cityController.text.trim(),
+                            );
+                            setState(() {});
                           },
                         ),
                       ],
@@ -228,38 +151,28 @@ class _WeatherPageState extends State<WeatherPage> {
                   ),
                   const SizedBox(height: 20),
                   MyLoader(
-                    isLoading: _isLoading,
+                    isLoading: weatherService.isLoading,
                     child: Column(
                       children: [
                         Text(
-                          _weather?.cityName ?? "Loading your city...",
+                          weatherService.weather?.cityName ??
+                              "Loading your city...",
                           style: const TextStyle(
                               fontSize: 30, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 10),
-                        Column(
-                          children: [
-                            Text(
-                              _weather != null
-                                  ? "${_weather?.temperature}°C"
-                                  : "",
-                              style: const TextStyle(fontSize: 24),
-                            ),
-                            Text(
-                              _weather != null ? "${_weather?.humidity}%" : "",
-                              style: const TextStyle(fontSize: 24),
-                            ),
-                          ],
+                        Text(
+                          weatherService.weather != null
+                              ? "${weatherService.weather?.temperature}°C"
+                              : "",
+                          style: const TextStyle(fontSize: 24),
                         ),
                         const SizedBox(height: 10),
-                        _weather?.mainCondition != null
-                            ? Lottie.asset(
-                                getWeatherConditionIcon(
-                                    _weather?.mainCondition))
-                            : Container(),
+                        Lottie.asset(weatherService.getWeatherConditionIcon(
+                            weatherService.weather?.mainCondition)),
                         const SizedBox(height: 8),
                         Text(
-                          _weather?.mainCondition ?? "",
+                          weatherService.weather?.mainCondition ?? "",
                           style: const TextStyle(fontSize: 20),
                         ),
                       ],

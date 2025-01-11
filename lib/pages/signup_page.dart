@@ -1,9 +1,9 @@
-import 'package:firebase_auth/firebase_auth.dart';
+// signup_page_ui.dart
 import 'package:flutter/material.dart';
 import 'package:weather_app/components/my_button.dart';
-import 'package:weather_app/components/my_textfield.dart';
 import 'package:weather_app/components/my_loader.dart';
-import 'package:weather_app/components/my_message.dart';
+import 'package:weather_app/components/my_textfield.dart';
+import 'package:weather_app/services/authentication/signup_service.dart';
 
 class SignupPage extends StatefulWidget {
   final Function()? onTap;
@@ -11,7 +11,7 @@ class SignupPage extends StatefulWidget {
   final bool isDarkMode;
 
   const SignupPage({
-    super.key, 
+    super.key,
     required this.onTap,
     required this.toggleTheme,
     required this.isDarkMode,
@@ -22,100 +22,18 @@ class SignupPage extends StatefulWidget {
 }
 
 class _SignupPageState extends State<SignupPage> {
-  // Text editing controllers
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
-  final confirmPasswordController = TextEditingController();
+  final SignupService _logic = SignupService();
 
-  // Loading state
-  bool _isLoading = false;
-
-  // Password visibility toggles
-  bool _isPasswordVisible = false;
-  bool _isConfirmPasswordVisible = false;
-
-  // Function to sign the user up
-  void signUserUp() async {
-    // Check if all fields are filled
-    if (emailController.text.trim().isEmpty ||
-        passwordController.text.trim().isEmpty ||
-        confirmPasswordController.text.trim().isEmpty) {
-      const MyMessage(
-        message: "Please fill in all the fields.",
-        backgroundColor: Colors.orange,
-        textColor: Colors.white,
-      ).show();
-      return;
-    }
-
-    // Check if passwords match
-    if (passwordController.text.trim() != confirmPasswordController.text.trim()) {
-      const MyMessage(
-        message: "The passwords don't match, please try again.",
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-      ).show();
-      return;
-    }
-
-    setState(() {
-      _isLoading = true; // Start loading
-    });
-
-    try {
-      // Create user with Firebase
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      );
-
-      // Show success message
-      const MyMessage(
-        message: "Sign up was successful!",
-        backgroundColor: Colors.green,
-        textColor: Colors.white,
-      ).show();
-
-      // Redirect to login page
-      Navigator.pushReplacementNamed(context, '/weather');
-    } 
-    
-    on FirebaseAuthException catch (e) {
-      String errorMessage;
-      switch (e.code) {
-        case 'email-already-in-use':
-          errorMessage = "This email is already in use.";
-          break;
-        case 'invalid-email':
-          errorMessage = "The email address is not valid.";
-          break;
-        case 'weak-password':
-          errorMessage = "The password is too weak.";
-          break;
-        default:
-          errorMessage = "An error occurred. Please try again.";
-      }
-
-      MyMessage(
-        message: errorMessage,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-      ).show();
-    }
-
-    confirmPasswordController.clear();
-
-    passwordController.clear();
-
-    emailController.clear();
-
-    setState(() {_isLoading = false;});
+  @override
+  void dispose() {
+    _logic.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return MyLoader(
-      isLoading: _isLoading, // Display loader when _isLoading is true
+      isLoading: _logic.isLoading,
       child: Scaffold(
         appBar: AppBar(
           actions: [
@@ -127,17 +45,15 @@ class _SignupPageState extends State<SignupPage> {
             ),
           ],
         ),
-        
-        backgroundColor: Theme.of(context).colorScheme.background, // Dynamic background color
+        backgroundColor: Theme.of(context).colorScheme.surface,
         body: SafeArea(
           child: Center(
-            child: SingleChildScrollView(         
+            child: SingleChildScrollView(
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  maxWidth: 400, // Optional: Constrain the width for larger devices
-                  minHeight: MediaQuery.of(context).size.height, // Take full height of screen
+                  maxWidth: 400,
+                  minHeight: MediaQuery.of(context).size.height,
                 ),
-
                 child: IntrinsicHeight(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -148,77 +64,58 @@ class _SignupPageState extends State<SignupPage> {
                         size: 150,
                         color: Colors.blue[900],
                       ),
-
-                      // Catchphrase
                       Text(
                         'Let\'s create an account for you!',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 16),
                         textAlign: TextAlign.center,
                       ),
-
                       const SizedBox(height: 25),
-
-                      // Email textfield
                       MyTextField(
-                        controller: emailController,
+                        controller: _logic.emailController,
                         hintText: 'Email',
                         obscureText: false,
                       ),
-
                       const SizedBox(height: 10),
-
-                      // Password textfield
                       MyTextField(
-                        controller: passwordController,
+                        controller: _logic.passwordController,
                         hintText: 'Password',
-                        obscureText: !_isPasswordVisible,
+                        obscureText: !_logic.isPasswordVisible,
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                            color: Theme.of(context).iconTheme.color, // Dynamic icon color
+                            _logic.isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                            color: Theme.of(context).iconTheme.color,
                           ),
                           onPressed: () {
                             setState(() {
-                              _isPasswordVisible = !_isPasswordVisible;
+                              _logic.isPasswordVisible = !_logic.isPasswordVisible;
                             });
                           },
                         ),
                       ),
-
                       const SizedBox(height: 10),
-
-                      // Confirm password textfield
                       MyTextField(
-                        controller: confirmPasswordController,
+                        controller: _logic.confirmPasswordController,
                         hintText: 'Confirm your password',
-                        obscureText: !_isConfirmPasswordVisible,
+                        obscureText: !_logic.isConfirmPasswordVisible,
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _isConfirmPasswordVisible
-                                ? Icons.visibility
-                                : Icons.visibility_off,
-                            color: Theme.of(context).iconTheme.color, // Dynamic icon color
+                            _logic.isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                            color: Theme.of(context).iconTheme.color,
                           ),
                           onPressed: () {
                             setState(() {
-                              _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+                              _logic.isConfirmPasswordVisible = !_logic.isConfirmPasswordVisible;
                             });
                           },
                         ),
                       ),
-
                       const SizedBox(height: 30),
-
-                      // Sign up button
                       MyButton(
                         width: 350,
                         text: "Sign up",
-                        onTap: signUserUp,
+                        onTap: () => _logic.signUserUp(context),
                       ),
-
                       const SizedBox(height: 30),
-
-                      // Redirect to login
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -239,7 +136,6 @@ class _SignupPageState extends State<SignupPage> {
                           ),
                         ],
                       ),
-
                       const SizedBox(height: 150),
                     ],
                   ),
