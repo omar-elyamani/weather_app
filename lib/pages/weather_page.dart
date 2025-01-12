@@ -168,6 +168,13 @@ class _WeatherPageState extends State<WeatherPage> {
                           style: const TextStyle(fontSize: 24),
                         ),
                         const SizedBox(height: 10),
+                        Text(
+                          weatherService.weather != null
+                              ? "Humidity : " "${weatherService.weather?.humidity}%"
+                              : "",
+                          style: const TextStyle(fontSize: 20),
+                        ),
+                        const SizedBox(height: 10),
                         Lottie.asset(weatherService.getWeatherConditionIcon(
                             weatherService.weather?.mainCondition)),
                         const SizedBox(height: 8),
